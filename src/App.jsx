@@ -8,19 +8,13 @@ export default function App() {
   const [erreur, setErreur] = useState(null)
 
   useEffect(() => {
-    // Lire l'immatriculation depuis l'URL de plusieurs façons
     let immat = null
 
-    // Méthode 1 : /moto/BF-4444-Z
     if (window.location.pathname.includes('/moto/')) {
       immat = window.location.pathname.split('/moto/')[1]
-    }
-    // Méthode 2 : /#/moto/BF-4444-Z
-    else if (window.location.hash.includes('/moto/')) {
+    } else if (window.location.hash.includes('/moto/')) {
       immat = window.location.hash.split('/moto/')[1]
-    }
-    // Méthode 3 : ?immat=BF-4444-Z
-    else if (window.location.search.includes('immat=')) {
+    } else if (window.location.search.includes('immat=')) {
       immat = new URLSearchParams(window.location.search).get('immat')
     }
 
@@ -55,6 +49,20 @@ export default function App() {
     }
   }
 
+  // Formater le numéro pour l'appel
+  const formaterTelephone = (tel) => {
+    if (!tel) return null
+    let numero = tel.trim().replaceAll(' ', '').replaceAll('-', '')
+    if (!numero.startsWith('+')) {
+      if (numero.startsWith('00')) {
+        numero = '+' + numero.substring(2)
+      } else {
+        numero = '+226' + numero
+      }
+    }
+    return numero
+  }
+
   if (loading) return (
     <div style={styles.center}>
       <div style={styles.spinner}></div>
@@ -81,6 +89,7 @@ export default function App() {
 
   const estVolee = moto.statut === "volée"
   const estNormale = moto.statut === "normal"
+  const telFormate = formaterTelephone(proprietaire?.telephone)
 
   return (
     <div style={styles.page}>
@@ -128,7 +137,7 @@ export default function App() {
 
         {/* INFOS MOTO */}
         <div style={styles.card}>
-          <h3 style={styles.cardTitre}> Informations de la moto</h3>
+          <h3 style={styles.cardTitre}>🏍️ Informations de la moto</h3>
           <div style={styles.divider} />
           {[
             ["Marque", moto.marque],
@@ -160,27 +169,55 @@ export default function App() {
             <span style={styles.cle}>Ville</span>
             <span style={styles.val}>{proprietaire?.ville || "Non renseignée"}</span>
           </div>
-          {estVolee && proprietaire?.telephone && (
-            <div style={{
-              display: "flex", justifyContent: "space-between", alignItems: "center",
-              background: "#fee2e2", borderRadius: 8, padding: "10px 12px", marginTop: 8
-            }}>
-              <span style={{ color: "#991b1b", fontSize: 13, fontFamily: "Arial" }}>📞 Téléphone</span>
-              <span style={{ fontWeight: "bold", color: "#991b1b", fontFamily: "Arial" }}>
-                {proprietaire.telephone}
-              </span>
-            </div>
+
+          {/* NUMÉRO CLIQUABLE si moto volée */}
+          {estVolee && proprietaire?.telephone && telFormate && (
+            <a
+              href={`tel:${telFormate}`}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                background: "#991b1b",
+                borderRadius: 10,
+                padding: "12px 16px",
+                marginTop: 12,
+                textDecoration: "none",
+                boxShadow: "0 4px 12px rgba(153,27,27,0.3)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 20 }}>📞</span>
+                <div>
+                  <div style={{ color: "#fff", fontSize: 12, fontFamily: "Arial" }}>
+                    Appeler le propriétaire
+                  </div>
+                  <div style={{ color: "rgba(255,255,255,0.8)", fontSize: 11, fontFamily: "Arial" }}>
+                    Cliquez pour appeler directement
+                  </div>
+                </div>
+              </div>
+              <div style={{
+                background: "rgba(255,255,255,0.2)",
+                padding: "6px 12px",
+                borderRadius: 8,
+              }}>
+                <span style={{ color: "#fff", fontWeight: "bold", fontSize: 14, fontFamily: "Arial" }}>
+                  {proprietaire.telephone}
+                </span>
+              </div>
+            </a>
           )}
         </div>
 
         {/* ALERTE VOLÉE */}
         {estVolee && (
           <div style={{ ...styles.card, background: "#fee2e2", border: "1px solid #fca5a5" }}>
-            <h3 style={{ ...styles.cardTitre, color: "#991b1b" }}> Que faire ?</h3>
+            <h3 style={{ ...styles.cardTitre, color: "#991b1b" }}>⚠️ Que faire ?</h3>
             <div style={styles.divider} />
             {[
               "Ne pas acheter cette moto",
-              "Contacter le propriétaire via le numéro affiché",
+              "Appeler le propriétaire via le bouton ci-dessus",
               "Alerter les forces de l'ordre",
               "Noter le lieu et l'heure de l'observation",
             ].map((item, i) => (
@@ -196,7 +233,7 @@ export default function App() {
         {estNormale && (
           <div style={{ ...styles.card, background: "#d1fae5", border: "1px solid #6ee7b7" }}>
             <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-              <span style={{ fontSize: 32 }}></span>
+              <span style={{ fontSize: 32 }}>✅</span>
               <p style={{ color: "#065f46", fontFamily: "Arial", fontSize: 14, margin: 0, lineHeight: 1.6 }}>
                 Cette moto est enregistrée officiellement dans le système national des engins motorisés du Burkina Faso.
               </p>
